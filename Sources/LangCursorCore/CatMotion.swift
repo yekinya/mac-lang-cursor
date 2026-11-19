@@ -24,6 +24,12 @@ public struct CatPose: Equatable, Sendable {
     public let frame: Int
     public let mirrored: Bool
 
+    public init(animation: CatAnimation, frame: Int, mirrored: Bool) {
+        self.animation = animation
+        self.frame = frame
+        self.mirrored = mirrored
+    }
+
     public var isMoving: Bool {
         animation == .runRight || animation == .runUp || animation == .runDown
     }

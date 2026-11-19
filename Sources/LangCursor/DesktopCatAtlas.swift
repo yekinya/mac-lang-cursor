@@ -43,6 +43,9 @@ final class DesktopCatAtlas {
 
 @MainActor
 final class DesktopCatView: NSView {
+    /// Clicking the cat makes it hiss and swipe.
+    var onClick: (() -> Void)?
+
     private let sprite = CALayer()
     private let atlas: DesktopCatAtlas
     private var renderedPose: CatPose?
@@ -66,6 +69,11 @@ final class DesktopCatView: NSView {
     }
 
     override var isOpaque: Bool { false }
+    override func acceptsFirstMouse(for event: NSEvent?) -> Bool { true }
+
+    override func mouseDown(with event: NSEvent) {
+        onClick?()
+    }
 
     func resize(to size: CGFloat) {
         CATransaction.begin()
