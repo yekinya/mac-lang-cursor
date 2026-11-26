@@ -2,7 +2,8 @@
 import AppKit
 
 let root = URL(fileURLWithPath: #filePath).deletingLastPathComponent().deletingLastPathComponent()
-let url = root.appendingPathComponent("Sources/LangCursor/Resources/CatSpriteAtlas.png")
+let species = CommandLine.arguments.dropFirst().first ?? "Cat"
+let url = root.appendingPathComponent("Sources/LangCursor/Resources/\(species)SpriteAtlas.png")
 let atlas = NSBitmapImageRep(data: try Data(contentsOf: url))!
 precondition(atlas.pixelsWide == 1024 && atlas.pixelsHigh == 1024 && atlas.hasAlpha)
 var count = 0

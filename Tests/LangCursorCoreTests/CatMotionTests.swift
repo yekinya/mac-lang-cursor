@@ -34,6 +34,29 @@ import Testing
         #expect(cat.position.x < origin.x)
     }
 
+    @Test(arguments: [0.4, 1.8, 3.5])
+    func usesSelectedFollowDelay(_ seconds: Double) {
+        var cat = CatMotion(position: origin)
+        cat.followDelay = seconds
+        let target = CGPoint(x: 500, y: 100)
+        cat.update(deltaTime: tick, target: target)
+        advance(&cat, ticks: Int((seconds / tick).rounded()) - 1, target: target)
+        #expect(cat.phase == .idle)
+        cat.update(deltaTime: tick, target: target)
+        #expect(cat.phase == .running)
+    }
+
+    @Test func disablingIdleAnimationsKeepsTheRestingPoseStill() {
+        var cat = CatMotion(position: origin)
+        #expect(cat.idleAnimationsEnabled)
+        cat.idleAnimationsEnabled = false
+        let initial = cat.pose
+        for _ in 0..<600 {
+            cat.update(deltaTime: 0.1, target: origin)
+            #expect(cat.pose == initial)
+        }
+    }
+
     @Test func meaningfulCursorMovementRestartsTheOnePointEightSecondDelay() {
         var cat = CatMotion(position: origin)
         let first = CGPoint(x: 700, y: 100)

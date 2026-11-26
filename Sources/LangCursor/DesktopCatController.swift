@@ -7,6 +7,12 @@ final class DesktopCatController {
     private(set) var isEnabled = true
     private(set) var size: CGFloat = 64 * 0.8
 
+    private var species: PetSpecies = .cat
+    private var clickReaction = true
+    private var fliesEnabled = false
+    private var poopLifetime: TimeInterval = 30
+    var reactionText: (String) -> String = { $0 }
+
     private var motion = CatMotion(position: .zero)
     private var panel: DesktopCatPanel?
     private var spriteView: DesktopCatView?
@@ -35,12 +41,8 @@ final class DesktopCatController {
         guard !started else { return }
         started = true
         suspended = false
-        do {
-            spriteView = try DesktopCatView(atlas: DesktopCatAtlas(), size: size)
-            spriteView?.onClick = { [weak self] in self?.hiss() }
-        } catch {
+        guard loadSprite(for: species) else {
             started = false
-            NSLog("Desktop cat atlas could not be loaded: %@", String(describing: error))
             return
         }
         observeEnvironment()
@@ -50,8 +52,56 @@ final class DesktopCatController {
         scheduleTick(interval: 1 / 30)
     }
 
+    private func loadSprite(for species: PetSpecies) -> Bool {
+        do {
+            let view = try DesktopCatView(atlas: DesktopCatAtlas(species: species), size: size)
+            view.onClick = { [weak self] in self?.hiss() }
+            spriteView = view
+            return true
+        } catch {
+            NSLog("Could not load %@: %@", species.atlasName, String(describing: error))
+            return false
+        }
+    }
+
+    func setSpecies(_ newSpecies: PetSpecies) {
+        guard species != newSpecies else { return }
+        if started {
+            guard loadSprite(for: newSpecies) else { return }
+            clearReaction()
+            recreatePanel()
+        }
+        species = newSpecies
+    }
+
+    func setFollowDelay(_ seconds: TimeInterval) { motion.followDelay = seconds }
+    func setIdleAnimations(_ enabled: Bool) { motion.idleAnimationsEnabled = enabled }
+
+    func setClickReaction(_ enabled: Bool) {
+        clickReaction = enabled
+        panel?.ignoresMouseEvents = !enabled
+        if !enabled { clearReaction() }
+    }
+
+    private func clearReaction() {
+        hissStart = nil
+        hissPanel?.close()
+        hissPanel = nil
+    }
+
+    func setPoopLifetime(_ seconds: TimeInterval) {
+        poopLifetime = seconds
+        for poop in poops { poop.setLifetime(seconds) }
+    }
+
+    func setFliesEnabled(_ enabled: Bool) {
+        fliesEnabled = enabled
+        if !enabled { for poop in poops { poop.removeFlies() } }
+    }
+
     func stop() {
         started = false
+        clearReaction()
         timer?.invalidate()
         timer = nil
         previousTick = nil
@@ -73,12 +123,13 @@ final class DesktopCatController {
         isEnabled = enabled
         guard started else { return }
         if enabled {
-            needs.recordActivity(at: ProcessInfo.processInfo.systemUptime)
+            needs.restartTimers(at: ProcessInfo.processInfo.systemUptime)
             resetNearCursor()
             recreatePanel()
             for poop in poops { poop.orderFrontRegardless() }
             scheduleTick(interval: 1 / 30)
         } else {
+            clearReaction()
             timer?.invalidate()
             timer = nil
             previousTick = nil
@@ -175,7 +226,7 @@ final class DesktopCatController {
     }
 
     private func dropPoop(on screen: NSScreen) {
-        let poopSize = (size * 0.5).rounded()
+        let poopSize = (size * 0.5).rounded() * 0.4
         // Behind the cat: a left-facing (mirrored) cat leaves it on its right.
         let behind: CGFloat = motion.pose.mirrored ? 1 : -1
         let spot = CatPlacement.clamp(
@@ -183,10 +234,11 @@ final class DesktopCatController {
                               y: motion.position.y - size * 0.32),
             to: screen.visibleFrame, catSize: CGSize(width: poopSize, height: poopSize)
         )
-        let poop = PoopPanel(center: spot, size: poopSize)
+        let poop = PoopPanel(center: spot, size: poopSize, showsFlies: fliesEnabled)
         poop.onClean = { [weak self] poop in self?.clean(poop) }
         poops.append(poop)
         poop.appear()
+        poop.setLifetime(poopLifetime)
         panel?.orderFrontRegardless()
         bowl?.orderFrontRegardless()
     }
@@ -195,14 +247,20 @@ final class DesktopCatController {
 
     /// Clicked: turn toward the cursor, swipe with a paw, and hiss in some language.
     private func hiss() {
-        guard isEnabled, !suspended else { return }
+        guard clickReaction, isEnabled, !suspended else { return }
         hissStart = ProcessInfo.processInfo.systemUptime
         hissMirrored = NSEvent.mouseLocation.x < motion.position.x
         let index = CatHiss.nextIndex(after: lastHissPhrase)
         lastHissPhrase = index
         hissPanel?.close()
+        let phrase: String
+        switch species {
+        case .cat: phrase = CatHiss.phrases[index].text
+        case .dog: phrase = reactionText("멍!")
+        case .hamster: phrase = reactionText("찍!")
+        }
         let effect = HissPanel(catCenter: motion.position, catSize: size,
-                               facingLeft: hissMirrored, text: CatHiss.phrases[index].text)
+                               facingLeft: hissMirrored, text: phrase)
         hissPanel = effect
         effect.play { [weak self, weak effect] in
             effect?.close()
@@ -218,7 +276,8 @@ final class DesktopCatController {
     }
 
     private func clean(_ poop: PoopPanel) {
-        poops.removeAll { $0 === poop }
+        guard let index = poops.firstIndex(where: { $0 === poop }) else { return }
+        poops.remove(at: index)
         poop.fadeAway()
     }
 
@@ -297,7 +356,7 @@ final class DesktopCatController {
             spriteView.render(CatPose(animation: .lick, frame: Int(chewing) % CatAnimation.frameCount,
                                       mirrored: bowlMirrored))
         } else {
-            spriteView.render(motion.pose)
+            spriteView.render(motion.pose, wagTail: motion.idleAnimationsEnabled && motion.phase == .idle)
         }
         let origin = CGPoint(x: motion.position.x - size / 2 + shake, y: motion.position.y - size / 2)
         if panel.frame.origin != origin { panel.setFrameOrigin(origin) }
@@ -308,6 +367,7 @@ final class DesktopCatController {
         guard let spriteView else { return }
         let old = panel
         let panel = DesktopCatPanel(size: size)
+        panel.ignoresMouseEvents = !clickReaction
         panel.contentView = spriteView
         self.panel = panel
         old?.close()
@@ -393,7 +453,7 @@ final class DesktopCatController {
     private func resume() {
         suspended = false
         previousTick = nil
-        needs.recordActivity(at: ProcessInfo.processInfo.systemUptime)
+        needs.restartTimers(at: ProcessInfo.processInfo.systemUptime)
         if isEnabled { for poop in poops { poop.orderFrontRegardless() } }
         keepOnAvailableScreens()
         recreatePanel()

@@ -14,4 +14,9 @@ final class MouseMonitor {
             MainActor.assumeIsolated { self?.onMove?() }
         }
     }
+
+    func stop() {
+        if let monitor { NSEvent.removeMonitor(monitor) }
+        monitor = nil
+    }
 }

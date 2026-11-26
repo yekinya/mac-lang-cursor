@@ -1,7 +1,7 @@
 import Foundation
 
 /// Hunger and litter timing for the desktop cat, independent of AppKit.
-/// Times are monotonic seconds (`ProcessInfo.systemUptime`). A delay of `0` turns the need off.
+/// Each need has its own monotonic deadline. Zero disables it, and positive values select idle time.
 public struct CatNeeds: Sendable {
     /// The meal errand that starts after the cursor has been still for `hungerDelay`.
     public enum Errand: Equatable, Sendable {
@@ -20,17 +20,45 @@ public struct CatNeeds: Sendable {
     public static let maxPoops = 5
     public static let eatingDuration: TimeInterval = 6
 
+    /// Stored preference for a fresh, independent interval between each pair of events.
+    public static let randomDelay: TimeInterval = -1
+
+    private struct Schedule: Sendable {
+        let delay: TimeInterval
+        var deadline: TimeInterval?
+
+        init(delay: TimeInterval, now: TimeInterval) {
+            self.delay = delay == CatNeeds.randomDelay ? delay : max(0, delay)
+            restart(at: now)
+        }
+
+        mutating func restart(at now: TimeInterval) {
+            switch delay {
+            case CatNeeds.randomDelay: deadline = now + Double.random(in: 600...1200)
+            case 0: deadline = nil
+            default: deadline = now + delay
+            }
+        }
+
+        mutating func cursorMoved(at now: TimeInterval) {
+            if delay > 0 { deadline = now + delay }
+        }
+
+        func isDue(at now: TimeInterval) -> Bool {
+            deadline.map { now >= $0 } ?? false
+        }
+    }
+
     public private(set) var errand: Errand = .none
-    public private(set) var hungerDelay: TimeInterval
-    public private(set) var poopDelay: TimeInterval
-    private var lastActivity: TimeInterval
-    private var pooped = false
+    public var hungerDelay: TimeInterval { hunger.delay }
+    public var poopDelay: TimeInterval { litter.delay }
+    private var hunger: Schedule
+    private var litter: Schedule
     private var mealStart: TimeInterval = 0
 
-    public init(now: TimeInterval, hungerDelay: TimeInterval = 60, poopDelay: TimeInterval = 10) {
-        self.hungerDelay = max(0, hungerDelay)
-        self.poopDelay = max(0, poopDelay)
-        lastActivity = now
+    public init(now: TimeInterval, hungerDelay: TimeInterval = 0, poopDelay: TimeInterval = 0) {
+        hunger = Schedule(delay: hungerDelay, now: now)
+        litter = Schedule(delay: poopDelay, now: now)
     }
 
     /// The bowl is visible from the moment it is carried until the meal is finished.
@@ -55,9 +83,9 @@ public struct CatNeeds: Sendable {
     /// waiting with the bowl keeps going, because serving the food needs the cursor.
     @discardableResult
     public mutating func recordActivity(at now: TimeInterval) -> Bool {
-        lastActivity = now
-        pooped = false
-        guard errand == .leaving else { return false }
+        hunger.cursorMoved(at: now)
+        litter.cursorMoved(at: now)
+        guard hunger.delay > 0, errand == .leaving else { return false }
         errand = .none
         return true
     }
@@ -74,13 +102,18 @@ public struct CatNeeds: Sendable {
     /// Ends any errand at once, e.g. when the cat is hidden or the setting changes.
     public mutating func cancelErrand(at now: TimeInterval) {
         errand = .none
-        lastActivity = now
+        hunger.restart(at: now)
+    }
+
+    public mutating func restartTimers(at now: TimeInterval) {
+        hunger.restart(at: now)
+        litter.restart(at: now)
     }
 
     /// Advances the errand. `catArrived` means the cat is resting at the current errand target.
     public mutating func update(now: TimeInterval, catArrived: Bool) {
         switch errand {
-        case .none where hungerDelay > 0 && now - lastActivity >= hungerDelay:
+        case .none where hunger.isDue(at: now):
             errand = .leaving
         case .leaving where catArrived:
             errand = .returning
@@ -89,28 +122,30 @@ public struct CatNeeds: Sendable {
         case .eating where now - mealStart >= Self.eatingDuration:
             errand = .none
             // A full cat gets hungry again only after another full delay.
-            lastActivity = now
+            hunger.restart(at: now)
         default:
             break
         }
     }
 
-    /// `true` once per still period: after the cursor has been still for `poopDelay`, as soon as
-    /// the cat is resting, free, and the screen has room. The next one needs the cursor to move.
+    /// Only an actual dropping consumes the deadline. A full screen or meal postpones it.
     public mutating func shouldPoop(now: TimeInterval, catResting: Bool, poopCount: Int) -> Bool {
-        guard poopDelay > 0, !pooped, now - lastActivity >= poopDelay,
-              catResting, errand == .none, poopCount < Self.maxPoops else { return false }
-        pooped = true
+        guard litter.isDue(at: now), catResting, errand == .none, poopCount < Self.maxPoops else { return false }
+        if litter.delay == Self.randomDelay {
+            litter.restart(at: now)
+        } else {
+            // Fixed idle modes re-arm on the next cursor movement.
+            litter.deadline = nil
+        }
         return true
     }
 
     public mutating func setHungerDelay(_ delay: TimeInterval, now: TimeInterval) {
-        hungerDelay = max(0, delay)
-        // A new setting counts from now, so shortening it never fires instantly.
-        cancelErrand(at: now)
+        hunger = Schedule(delay: delay, now: now)
+        errand = .none
     }
 
-    public mutating func setPoopDelay(_ delay: TimeInterval) {
-        poopDelay = max(0, delay)
+    public mutating func setPoopDelay(_ delay: TimeInterval, now: TimeInterval = ProcessInfo.processInfo.systemUptime) {
+        litter = Schedule(delay: delay, now: now)
     }
 }

@@ -5,11 +5,13 @@ import ImageIO
 // Lossless sprite extraction/packing after Imagegen. Artwork is never redrawn here.
 // Source gutters are measured explicitly: image generation does not guarantee cell alignment.
 let root = URL(fileURLWithPath: #filePath).deletingLastPathComponent().deletingLastPathComponent()
-let sourceURL = root.appendingPathComponent("Artwork/CatSpriteSource.png")
-let outputURL = root.appendingPathComponent("Sources/LangCursor/Resources/CatSpriteAtlas.png")
+let species = CommandLine.arguments.dropFirst().first ?? "Cat"
+let sourceURL = root.appendingPathComponent("Artwork/\(species)SpriteSource.png")
+let outputURL = root.appendingPathComponent("Sources/LangCursor/Resources/\(species)SpriteAtlas.png")
 let source = NSBitmapImageRep(data: try Data(contentsOf: sourceURL))!
-let columns = [20, 188, 338, 488, 638, 788, 938, 1088, 1254]
-let rows = [25, 178, 334, 486, 629, 766, 903, 1057, 1234]
+let evenGrid = (0...8).map { $0 * source.pixelsWide / 8 }
+let columns = species == "Cat" ? [20, 188, 338, 488, 638, 788, 938, 1088, 1254] : evenGrid
+let rows = species == "Cat" ? [25, 178, 334, 486, 629, 766, 903, 1057, 1234] : evenGrid
 let cell = 128
 let atlas = NSBitmapImageRep(
     bitmapDataPlanes: nil, pixelsWide: cell * 8, pixelsHigh: cell * 8,

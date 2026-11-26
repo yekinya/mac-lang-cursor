@@ -4,10 +4,12 @@ import AppKit
 @MainActor
 final class PoopPanel: NSPanel {
     var onClean: ((PoopPanel) -> Void)?
-    private let flies: FliesPanel
+    private var flies: FliesPanel?
+    private let createdAt = Date()
+    private var expiration: DispatchWorkItem?
 
-    init(center: CGPoint, size: CGFloat) {
-        flies = FliesPanel(poopCenter: center, poopSize: size)
+    init(center: CGPoint, size: CGFloat, showsFlies: Bool) {
+        if showsFlies { flies = FliesPanel(poopCenter: center, poopSize: size) }
         super.init(
             contentRect: NSRect(x: center.x - size / 2, y: center.y - size / 2, width: size, height: size),
             styleMask: [.borderless, .nonactivatingPanel], backing: .buffered, defer: false
@@ -32,26 +34,45 @@ final class PoopPanel: NSPanel {
 
     func appear() {
         alphaValue = 0
-        flies.alphaValue = 0
+        flies?.alphaValue = 0
         orderFrontRegardless()
-        flies.orderFrontRegardless()
         NSAnimationContext.runAnimationGroup { context in
             context.duration = 0.35
             animator().alphaValue = 1
-            flies.animator().alphaValue = 1
+            flies?.animator().alphaValue = 1
         }
+        guard flies != nil else { return }
         DispatchQueue.main.asyncAfter(deadline: .now() + Self.flyLifetime) { [weak self] in
-            MainActor.assumeIsolated { self?.flies.flyAway() }
+            MainActor.assumeIsolated { self?.flies?.flyAway() }
         }
+    }
+
+    func setLifetime(_ seconds: TimeInterval) {
+        expiration?.cancel()
+        expiration = nil
+        guard seconds > 0 else { return }
+        let work = DispatchWorkItem { [weak self] in
+            guard let self else { return }
+            onClean?(self)
+        }
+        expiration = work
+        let remaining = max(0, createdAt.addingTimeInterval(seconds).timeIntervalSinceNow)
+        DispatchQueue.main.asyncAfter(wallDeadline: .now() + remaining, execute: work)
+    }
+
+    func removeFlies() {
+        flies?.close()
+        flies = nil
     }
 
     /// Fades the dropping and its flies out, then closes both.
     func fadeAway() {
+        expiration?.cancel()
         ignoresMouseEvents = true
         NSAnimationContext.runAnimationGroup({ context in
             context.duration = 0.25
             animator().alphaValue = 0
-            flies.animator().alphaValue = 0
+            flies?.animator().alphaValue = 0
         }, completionHandler: { [weak self] in
             MainActor.assumeIsolated { self?.close() }
         })
@@ -59,16 +80,17 @@ final class PoopPanel: NSPanel {
 
     override func orderFrontRegardless() {
         super.orderFrontRegardless()
-        flies.orderFrontRegardless()
+        flies?.orderFrontRegardless()
     }
 
     override func orderOut(_ sender: Any?) {
-        flies.orderOut(sender)
+        flies?.orderOut(sender)
         super.orderOut(sender)
     }
 
     override func close() {
-        flies.close()
+        expiration?.cancel()
+        removeFlies()
         super.close()
     }
 }
@@ -128,7 +150,7 @@ private final class FliesView: NSView {
         layer?.backgroundColor = NSColor.clear.cgColor
         swarmCenter = CGPoint(x: frame.width / 2, y: frame.height / 2 + poopSize * 0.09)
         let reach = CGSize(width: poopSize * 0.75, height: poopSize * 0.45)
-        let baseSize = max(5, poopSize * 0.26)
+        let baseSize = max(2, poopSize * 0.26)
         // Each dropping gets its own little swarm; every fly wanders its own way.
         for _ in 0..<Int.random(in: 2...3) {
             addFly(size: baseSize * CGFloat.random(in: 0.8...1.1), reach: reach)
@@ -264,7 +286,7 @@ private final class PoopView: NSView {
         }
         let fill = NSColor(calibratedRed: 0.56, green: 0.35, blue: 0.18, alpha: 1)
         let line = NSColor(calibratedRed: 0.35, green: 0.20, blue: 0.09, alpha: 1)
-        let lineWidth = max(1, w * 0.035)
+        let lineWidth = max(0.4, w * 0.035)
 
         // Swirl from the tip down; each lower tier overlaps the one above it.
         let tip = NSBezierPath()

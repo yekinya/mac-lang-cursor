@@ -13,6 +13,8 @@ final class KeyboardMonitor {
 
     private var tap: CFMachPort?
 
+    private var retry: DispatchWorkItem?
+
     var isRunning: Bool { tap != nil }
 
     /// Asks for permission if needed, and starts once it is granted.
@@ -27,15 +29,25 @@ final class KeyboardMonitor {
         // tapCreate succeeds without permission and the tap then silently receives nothing,
         // so its result alone can't be trusted.
         guard CGPreflightListenEventAccess(), let tap = makeTap() else {
-            DispatchQueue.main.asyncAfter(deadline: .now() + Self.retryInterval) { [weak self] in
+            let work = DispatchWorkItem { [weak self] in
                 self?.installTapWhenPermitted()
             }
+            retry = work
+            DispatchQueue.main.asyncAfter(deadline: .now() + Self.retryInterval, execute: work)
             return
         }
 
+        retry = nil
         self.tap = tap
         let source = CFMachPortCreateRunLoopSource(nil, tap, 0)
         CFRunLoopAddSource(CFRunLoopGetMain(), source, .commonModes)
+    }
+
+    func stop() {
+        retry?.cancel()
+        retry = nil
+        if let tap { CFMachPortInvalidate(tap) }
+        tap = nil
     }
 
     private func makeTap() -> CFMachPort? {

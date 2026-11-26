@@ -2,6 +2,68 @@ import Testing
 @testable import LangCursorCore
 
 @Suite struct CatNeedsTests {
+    @Test func hungerAndDroppingsAreOffByDefault() {
+        var needs = CatNeeds(now: 0)
+        needs.update(now: 1000, catArrived: true)
+        #expect(needs.errand == .none)
+        let dropped = needs.shouldPoop(now: 1000, catResting: true, poopCount: 0)
+        #expect(!dropped)
+    }
+
+    @Test func randomDroppingsRepeatWithoutMovementAndWaitForAvailableSpace() {
+        var needs = CatNeeds(now: 50, poopDelay: CatNeeds.randomDelay)
+        var previous = 50.0
+        for _ in 0..<5 {
+            needs.recordActivity(at: previous + 599)
+            let tooSoon = needs.shouldPoop(now: previous + 599, catResting: true, poopCount: 0)
+            #expect(!tooSoon)
+            let noRoom = needs.shouldPoop(now: previous + 1200, catResting: true, poopCount: 5)
+            #expect(!noRoom)
+            let moving = needs.shouldPoop(now: previous + 1250, catResting: false, poopCount: 0)
+            #expect(!moving)
+            previous += 1300
+            let dropped = needs.shouldPoop(now: previous, catResting: true, poopCount: 0)
+            #expect(dropped)
+            let duplicate = needs.shouldPoop(now: previous, catResting: true, poopCount: 0)
+            #expect(!duplicate)
+        }
+    }
+
+    @Test func randomMealsRepeatFromTheEndOfEatingIndependentlyOfDroppings() {
+        var needs = CatNeeds(now: 0, hungerDelay: CatNeeds.randomDelay)
+        var previousMeal = 0.0
+        for _ in 0..<5 {
+            needs.setPoopDelay(CatNeeds.randomDelay, now: previousMeal + 500)
+            needs.recordActivity(at: previousMeal + 599)
+            needs.update(now: previousMeal + 599, catArrived: false)
+            #expect(needs.errand == .none)
+            needs.update(now: previousMeal + 1200, catArrived: false)
+            #expect(needs.errand == .leaving)
+            let cancelled = needs.recordActivity(at: previousMeal + 1201)
+            #expect(!cancelled)
+            needs.update(now: previousMeal + 1202, catArrived: true)
+            let served = needs.serveFood(at: previousMeal + 1203)
+            #expect(served)
+            previousMeal += 1203 + CatNeeds.eatingDuration
+            needs.update(now: previousMeal, catArrived: true)
+            #expect(needs.errand == .none)
+        }
+    }
+
+    @Test func randomSchedulesStartFreshOnEnableAndDoNotCatchUpAfterResume() {
+        var needs = CatNeeds(now: 0)
+        needs.setPoopDelay(CatNeeds.randomDelay, now: 2000)
+        needs.setHungerDelay(CatNeeds.randomDelay, now: 2000)
+        needs.restartTimers(at: 10000)
+        needs.update(now: 10599, catArrived: false)
+        #expect(needs.errand == .none)
+        let early = needs.shouldPoop(now: 10599, catResting: true, poopCount: 0)
+        #expect(!early)
+        needs.setPoopDelay(0, now: 10600)
+        let disabled = needs.shouldPoop(now: 12000, catResting: true, poopCount: 0)
+        #expect(!disabled)
+    }
+
     private func waitingCat() -> CatNeeds {
         var needs = CatNeeds(now: 0, hungerDelay: 30, poopDelay: 0)
         needs.update(now: 30, catArrived: false)
