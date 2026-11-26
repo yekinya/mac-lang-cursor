@@ -24,6 +24,12 @@ public struct CatPose: Equatable, Sendable {
     public let frame: Int
     public let mirrored: Bool
 
+    public init(animation: CatAnimation, frame: Int, mirrored: Bool) {
+        self.animation = animation
+        self.frame = frame
+        self.mirrored = mirrored
+    }
+
     public var isMoving: Bool {
         animation == .runRight || animation == .runUp || animation == .runDown
     }
@@ -49,7 +55,12 @@ public struct CatMotion: Sendable {
     private var targetPending = false
 
     // The follow delay is wall-clock time; slowing animation must not turn it into six seconds.
-    private static let followDelay: TimeInterval = 1.8
+    public var followDelay: TimeInterval = 1.8
+    public var idleAnimationsEnabled = true {
+        didSet {
+            if !idleAnimationsEnabled, [.licking, .washing, .stretching].contains(phase) { enterIdle() }
+        }
+    }
     private static let animationSpeed: Double = 0.5
     private static let movementSpeed: CGFloat = 1.15
     private static let settleDuration: TimeInterval = 0.4
@@ -73,7 +84,7 @@ public struct CatMotion: Sendable {
         switch phase {
         case .idle:
             animation = .idle
-            frame = Self.loopFrame(elapsed * 3)
+            frame = idleAnimationsEnabled ? Self.loopFrame(elapsed * 3) : 0
         case .settling:
             animation = .sitDown
             frame = Self.transitionFrame(elapsed / Self.settleDuration)
@@ -138,7 +149,7 @@ public struct CatMotion: Sendable {
                 startRunning(toward: difference)
                 return
             }
-            advanceRestingActivity()
+            if idleAnimationsEnabled { advanceRestingActivity() }
         case .settling:
             if distance > Self.startDistance {
                 startRunning(toward: difference)
@@ -157,7 +168,7 @@ public struct CatMotion: Sendable {
             targetPending = true
         } else if targetPending {
             targetQuietTime += deltaTime
-            if targetQuietTime + 0.000_001 >= Self.followDelay {
+            if targetQuietTime + 0.000_001 >= followDelay {
                 followTarget = observedTarget
                 targetPending = false
             }

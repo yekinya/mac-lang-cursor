@@ -1,0 +1,282 @@
+{
+  "바탕화면 동물": {
+    "en": "Show desktop pet",
+    "cn": "显示桌面宠物",
+    "ja": "デスクトップペットを表示",
+    "es": "Mostrar mascota de escritorio",
+    "fr": "Afficher le compagnon de bureau"
+  },
+  "동물 선택": {
+    "en": "Choose a pet",
+    "cn": "选择宠物",
+    "ja": "ペットを選ぶ",
+    "es": "Elegir mascota",
+    "fr": "Choisir un compagnon"
+  },
+  "고양이": {
+    "en": "Cat",
+    "cn": "猫",
+    "ja": "猫",
+    "es": "Gato",
+    "fr": "Chat"
+  },
+  "강아지": {
+    "en": "Puppy",
+    "cn": "小狗",
+    "ja": "子犬",
+    "es": "Perrito",
+    "fr": "Chiot"
+  },
+  "햄스터": {
+    "en": "Hamster",
+    "cn": "仓鼠",
+    "ja": "ハムスター",
+    "es": "Hámster",
+    "fr": "Hamster"
+  },
+  "동물 크기": {
+    "en": "Pet size",
+    "cn": "宠物大小",
+    "ja": "ペットの大きさ",
+    "es": "Tamaño de la mascota",
+    "fr": "Taille du compagnon"
+  },
+  "아주 작게": {
+    "en": "Tiny",
+    "cn": "很小",
+    "ja": "とても小さい",
+    "es": "Diminuto",
+    "fr": "Très petit"
+  },
+  "작게": {
+    "en": "Small",
+    "cn": "小",
+    "ja": "小さい",
+    "es": "Pequeño",
+    "fr": "Petit"
+  },
+  "보통": {
+    "en": "Normal",
+    "cn": "标准",
+    "ja": "標準",
+    "es": "Normal",
+    "fr": "Normal"
+  },
+  "따라오기 대기 시간": {
+    "en": "Delay before following",
+    "cn": "跟随前的等待时间",
+    "ja": "追いかけ始めるまでの時間",
+    "es": "Espera antes de seguir",
+    "fr": "Délai avant de suivre"
+  },
+  "짧게": {
+    "en": "Short",
+    "cn": "短",
+    "ja": "短め",
+    "es": "Corta",
+    "fr": "Court"
+  },
+  "중간": {
+    "en": "Medium",
+    "cn": "中",
+    "ja": "標準",
+    "es": "Media",
+    "fr": "Moyen"
+  },
+  "길게": {
+    "en": "Long",
+    "cn": "长",
+    "ja": "長め",
+    "es": "Larga",
+    "fr": "Long"
+  },
+  "쉬는 동작": {
+    "en": "Idle animations",
+    "cn": "待机动作",
+    "ja": "待機中のしぐさ",
+    "es": "Animaciones en reposo",
+    "fr": "Animations au repos"
+  },
+  "클릭 반응": {
+    "en": "React to clicks",
+    "cn": "点击时回应",
+    "ja": "クリックに反応",
+    "es": "Reaccionar a los clics",
+    "fr": "Réagir aux clics"
+  },
+  "배고파지는 시간": {
+    "en": "Time until hungry",
+    "cn": "多久后会饿",
+    "ja": "お腹が空くまでの時間",
+    "es": "Tiempo hasta tener hambre",
+    "fr": "Délai avant d’avoir faim"
+  },
+  "끄기": {
+    "en": "Off",
+    "cn": "关闭",
+    "ja": "オフ",
+    "es": "Desactivado",
+    "fr": "Désactivé"
+  },
+  "10초": {
+    "en": "10 seconds",
+    "cn": "10 秒",
+    "ja": "10秒",
+    "es": "10 segundos",
+    "fr": "10 secondes"
+  },
+  "30초": {
+    "en": "30 seconds",
+    "cn": "30 秒",
+    "ja": "30秒",
+    "es": "30 segundos",
+    "fr": "30 secondes"
+  },
+  "1분": {
+    "en": "1 minute",
+    "cn": "1 分钟",
+    "ja": "1分",
+    "es": "1 minuto",
+    "fr": "1 minute"
+  },
+  "3분": {
+    "en": "3 minutes",
+    "cn": "3 分钟",
+    "ja": "3分",
+    "es": "3 minutos",
+    "fr": "3 minutes"
+  },
+  "5분": {
+    "en": "5 minutes",
+    "cn": "5 分钟",
+    "ja": "5分",
+    "es": "5 minutos",
+    "fr": "5 minutes"
+  },
+  "10분": {
+    "en": "10 minutes",
+    "cn": "10 分钟",
+    "ja": "10分",
+    "es": "10 minutos",
+    "fr": "10 minutes"
+  },
+  "똥 남기는 시간": {
+    "en": "Keep droppings for",
+    "cn": "便便保留时间",
+    "ja": "うんちが消えるまで",
+    "es": "Cuánto dura la caca",
+    "fr": "Durée des crottes"
+  },
+  "잠시 후 사라지기 (5초)": {
+    "en": "Disappear after 5 seconds",
+    "cn": "5 秒后消失",
+    "ja": "5秒で消える",
+    "es": "Desaparecer a los 5 segundos",
+    "fr": "Disparaître après 5 secondes"
+  },
+  "잠깐 남기기 (30초)": {
+    "en": "Keep for 30 seconds",
+    "cn": "保留 30 秒",
+    "ja": "30秒間残す",
+    "es": "Dejar durante 30 segundos",
+    "fr": "Garder 30 secondes"
+  },
+  "사라지지 않기": {
+    "en": "Keep until clicked",
+    "cn": "保留到点击为止",
+    "ja": "クリックするまで残す",
+    "es": "Dejar hasta hacer clic",
+    "fr": "Garder jusqu’au clic"
+  },
+  "파리 표시": {
+    "en": "Show flies",
+    "cn": "显示苍蝇",
+    "ja": "ハエを表示",
+    "es": "Mostrar moscas",
+    "fr": "Afficher les mouches"
+  },
+  "똥 모두 치우기": {
+    "en": "Clear all droppings",
+    "cn": "清理所有便便",
+    "ja": "うんちをすべて片付ける",
+    "es": "Recoger toda la caca",
+    "fr": "Ramasser toutes les crottes"
+  },
+  "똥 모두 치우기 ({count}개)": {
+    "en": "Clear all droppings ({count})",
+    "cn": "清理所有便便（{count} 个）",
+    "ja": "うんちをすべて片付ける（{count}個）",
+    "es": "Recoger toda la caca ({count})",
+    "fr": "Ramasser toutes les crottes ({count})"
+  },
+  "입력 언어 배지": {
+    "en": "Input language badge",
+    "cn": "输入语言标记",
+    "ja": "入力言語バッジ",
+    "es": "Indicador de idioma de entrada",
+    "fr": "Indicateur de langue de saisie"
+  },
+  "항상 켜져 있기": {
+    "en": "Always show badge",
+    "cn": "始终显示标记",
+    "ja": "バッジを常に表示",
+    "es": "Mostrar siempre el indicador",
+    "fr": "Toujours afficher l’indicateur"
+  },
+  "입력 모니터링 권한 허용…": {
+    "en": "Allow input monitoring…",
+    "cn": "允许输入监控…",
+    "ja": "入力監視を許可…",
+    "es": "Permitir la monitorización de entrada…",
+    "fr": "Autoriser la surveillance de l’entrée…"
+  },
+  "메뉴 언어": {
+    "en": "Menu language",
+    "cn": "菜单语言",
+    "ja": "メニューの言語",
+    "es": "Idioma del menú",
+    "fr": "Langue du menu"
+  },
+  "시스템 언어": {
+    "en": "System language",
+    "cn": "系统语言",
+    "ja": "システムの言語",
+    "es": "Idioma del sistema",
+    "fr": "Langue du système"
+  },
+  "종료": {
+    "en": "Quit",
+    "cn": "退出",
+    "ja": "終了",
+    "es": "Salir",
+    "fr": "Quitter"
+  },
+  "멍!": {
+    "en": "Woof!",
+    "cn": "汪！",
+    "ja": "ワン！",
+    "es": "¡Guau!",
+    "fr": "Ouaf !"
+  },
+  "찍!": {
+    "en": "Squeak!",
+    "cn": "吱！",
+    "ja": "キュッ！",
+    "es": "¡Chii!",
+    "fr": "Couic !"
+  },
+  "배변 간격": {
+    "en": "Dropping interval",
+    "cn": "排便间隔",
+    "ja": "うんちの間隔",
+    "es": "Intervalo entre deposiciones",
+    "fr": "Intervalle entre les crottes"
+  },
+  "켜기 (10~20분 무작위)": {
+    "en": "On (random, 10–20 minutes)",
+    "cn": "开启（随机 10 至 20 分钟）",
+    "ja": "オン（ランダム・10〜20分）",
+    "es": "Activado (aleatorio, 10–20 minutos)",
+    "fr": "Activé (aléatoire, 10 à 20 minutes)"
+  }
+}

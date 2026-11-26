@@ -27,6 +27,12 @@ final class InputSourceMonitor: NSObject {
         )
     }
 
+    func stop() {
+        DistributedNotificationCenter.default().removeObserver(self)
+        pollTimer?.cancel()
+        pollTimer = nil
+    }
+
     @objc private func inputSourceChanged() {
         refresh()
     }
