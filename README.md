@@ -19,12 +19,16 @@
 
 ## 빌드와 실행
 
+macOS 13 이상(Apple Silicon 및 Intel)에서는 [맥 설치본](build/LangCursor-macOS.dmg)을 열고 `LangCursor.app`을 `Applications`에 끌어다 놓은 뒤 실행합니다. 재설치할 때는 메뉴바에서 앱을 먼저 종료하세요.
+
+`build/`의 설치본은 Git에 포함됩니다. 브랜치에 푸시하면 GitHub Actions가 빌드 입력과 설치본의 체크섬을 확인하고, 변경이 있으면 테스트와 빌드를 거쳐 같은 브랜치에 설치본을 커밋합니다.
+
+소스에서 직접 빌드하려면 다음 명령을 실행합니다.
+
 ```sh
 ./scripts/build-app.sh
 open dist/LangCursor.app
 ```
-
-macOS 13 이상이 필요합니다.
 
 ## 권한
 
